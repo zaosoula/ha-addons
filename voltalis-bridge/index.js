@@ -39,8 +39,18 @@ cron.schedule('* * * * *', async () => {
 			unit_of_measurement: 'kW',
 			device_class: 'power'
 		}
-	}).then((data) => {
-		console.log('Sensor updated', data);
+	}).catch((error) => {
+		console.log('Sensor update error', error);
+	})
+
+	hass.updateSensor('voltalis_consumption', {
+		state: data.immediateConsumptionInkW.consumption * (data.immediateConsumptionInkW.duration / 3600),
+		attributes: {
+			friendly_name: 'Voltalis Consumption',
+			icon: 'mdi:home-lightning-bolt-outline',
+			unit_of_measurement: 'kWh',
+			device_class: 'energy'
+		}
 	}).catch((error) => {
 		console.log('Sensor update error', error);
 	})
