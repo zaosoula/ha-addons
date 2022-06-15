@@ -6,16 +6,12 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apk add --no-cache \
     nodejs \
-    npm \
-    git
-
-RUN npm install -g yarn
+    yarn \
+    git 
 
 COPY package.json /
 COPY yarn.lock /
-COPY index.js /
-COPY voltalis.js /
-COPY homeassistant.js /
+COPY src/ /src/
 
 RUN cd / && yarn install 
 

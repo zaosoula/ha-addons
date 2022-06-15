@@ -3,10 +3,10 @@
     "version": "1.1.2",
     "description": "Volalis Bridge",
     "author": "Zao Soula <https://github.com/zaosoula>",
-    "main": "index.js",
+    "main": "src/index.js",
     "scripts": {
-        "start": "node index.js",
-        "dev": "nodemon index.js",
+        "start": "node src/index.js",
+        "dev": "nodemon src/index.js",
         "docker:build": "docker build --no-cache --build-arg BUILD_FROM=\"homeassistant/amd64-base:latest\" -t local/my-test-addon .",
         "docker:run": "docker run --rm -v /tmp/my_test_data:/data local/my-test-addon",
         "postversion": "node ./bin/postversion"

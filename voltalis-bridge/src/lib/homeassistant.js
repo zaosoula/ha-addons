@@ -1,9 +1,4 @@
 const axios = require('axios');
-const fs = require('fs');
-const { wrapper } = require('axios-cookiejar-support');
-const { CookieJar, Cookie } = require('tough-cookie');
-const path = require('path');
-
 
 class Sensor {
   constructor(name, attributes, api) {
@@ -24,6 +19,9 @@ class Sensor {
 
     return this.api.post('states/sensor.' + this.name, state).then(() => {
       this.lastState = state;
+    }).catch((error) => {
+      console.log('Sensor update error', error);
+      return error;
     });
   }
 }
@@ -31,10 +29,10 @@ class Sensor {
 class HomeAssistant {
   constructor(token) {
     this.options = {headers: {'Authorization': 'Bearer ' + token}}
-    this.api = wrapper(axios.create({
+    this.api = axios.create({
       baseURL: 'http://supervisor/core/api',
       headers: {'Authorization': 'Bearer ' + token}
-    }));
+    });
     this.sensors = {};
   }
 
