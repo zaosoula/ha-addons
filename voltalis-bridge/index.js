@@ -11,8 +11,6 @@ const CONFIG = {
 	password: process.env.VOLTALIS_PASSWORD,
 }
 
-console.log(CONFIG);
-
 if (CONFIG.username === undefined && CONFIG.password === undefined) {
 	console.log("You must set a username and a in the addon config")
 	process.exit(22)
