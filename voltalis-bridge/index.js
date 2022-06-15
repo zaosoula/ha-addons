@@ -1,10 +1,6 @@
-const express = require("express")
 const Voltalis = require("./voltalis");
-
-const port = 8000;
-
-console.log('Initializing webservice.')
-const webservice = express();
+const HomeAssistant = require('homeassistant');
+const cron = require('node-cron');
 
 const CONFIG = {
 	username: process.env.VOLTALIS_USERNAME,
@@ -16,18 +12,36 @@ if (CONFIG.username === undefined && CONFIG.password === undefined) {
 	process.exit(22)
 }
 
-console.log(`Initializing Voltalis API`);
+const hass = new HomeAssistant({
+  host: 'http://supervisor/core/api',
+  token: process.env.SUPERVISOR_TOKEN,
+  ignoreCert: false
+});
+
+console.log(`Initializing Voltalis API.`);
 const voltalis = new Voltalis(CONFIG.username, CONFIG.password);
-voltalis.login();
+voltalis.login().then(() => {
+	console.log('Connected to Voltalis API.');
+});
 
 
-webservice.get('/immediateConsumptionInkW', async (req, res) => {
-	console.log("GET /immediateConsumptionInkW")
-	const data = await voltalis.fetchImmediateConsumptionInkW()
-	console.log("GET /immediateConsumptionInkW:", data);
-	res.json(data)
-})
+cron.schedule('* * * * *', async () => {
+	if(!voltalis.isLoggedIn()) {
+		console.log('[ImmediateConsumptionInkW] Voltalis API not logged in.')
+		return;
+	}
 
-webservice.listen(port, () => {
-	console.log(`Voltalis Bridge is running on port ${port}.`);
-})
+	console.log('[ImmediateConsumptionInkW] Updating states.')
+
+	const data = await voltalis.fetchImmediateConsumptionInkW();
+
+	hass.states.update('sensor', 'voltalis_immediate_consumption', {
+		state: data.immediateConsumptionInkW.consumption,
+		attributes: {
+			friendly_name: 'Voltalis Immediate Consumption',
+			icon: 'mdi:home-lightning-bolt-outline',
+			unit_of_measurement: 'kW',
+			device_class: 'power'
+		}
+	});
+});

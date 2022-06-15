@@ -7,6 +7,8 @@
   "description": "Bridge to Voltalis services. Built by Zao Soula <https://github.com/zaosoula>",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
   "startup": "services",
+  "hassio_api": true,
+  "homeassistant_api": true,
   "boot": "auto",
   "init": false,
   "ports": {
