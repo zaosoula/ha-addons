@@ -12,8 +12,11 @@ RUN apk add --no-cache \
 RUN npm install -g yarn
 
 COPY package.json /
+COPY yarn.lock /
 COPY index.js /
 COPY voltalis.js /
+COPY homeassistant.js /
+
 RUN cd / && yarn install 
 
 COPY run.sh /
