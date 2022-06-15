@@ -97,7 +97,7 @@ class Voltalis {
       }
 
 
-      console.log(err);
+      console.error(err?.response);
       throw new Error('Unable to login');
     }
 
