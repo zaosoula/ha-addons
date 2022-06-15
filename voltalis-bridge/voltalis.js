@@ -8,9 +8,18 @@ const path = require('path');
 class Voltalis {
   constructor(username, password) {
     this.credentials = {
-      username, 
+      id: "",
+      alternative_email: "",
+      email: "",
+      firstname: "",
+      lastname: "",
+      login: "",
       password,
-      stayLoggedIn: true
+      phone: "",
+      country: "",
+      selectedSiteId: "",
+      username,
+      stayLoggedIn: "true",
     }
     this.cookiePath = process.env.NODE_ENV === 'production' ? '/data/cookies.json' : path.join(__dirname, 'cookies.json');
 
