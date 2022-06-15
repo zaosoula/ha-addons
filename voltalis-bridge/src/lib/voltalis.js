@@ -1,7 +1,8 @@
 const axios = require('axios');
+const { axios: axiosObservable } = require('./poller');
 const fs = require('fs');
 const { wrapper } = require('axios-cookiejar-support');
-const { CookieJar, Cookie } = require('tough-cookie');
+const { CookieJar } = require('tough-cookie');
 const path = require('path');
 
 
@@ -26,6 +27,8 @@ class Voltalis {
     this.user = null;
 
     this.initAxios();
+
+    this.fetchImmediateConsumptionInkW = this.fetchImmediateConsumptionInkW.bind(this);
   }
 
   initAxios() {
@@ -47,17 +50,32 @@ class Voltalis {
       this.jar = new CookieJar();
     }
 
+    this.observableApi = wrapper(axiosObservable.create({
+      withCredentials: true,
+      baseURL: 'https://classic.myvoltalis.com/',
+      jar: this.jar
+    }));
+
     this.api = wrapper(axios.create({
       withCredentials: true,
       baseURL: 'https://classic.myvoltalis.com/',
       jar: this.jar
     }));
 
-    this.api.interceptors.request.use((config) => {
+    this.observableApi.interceptors.request.use((config) => {
       if(this.isLoggedIn()){
         config.headers['User-Site-Id'] = this.getMainSite().id;
       }
       return config;
+    });
+
+    this.observableApi.interceptors.response.use(function (response) {
+      return response;
+    }, function (error) {
+      if (error.response) {
+        console.error('Error code', error.response);
+      }
+      return error;
     });
 
    this.api.interceptors.response.use(function (response) {
@@ -67,7 +85,6 @@ class Voltalis {
       saveCookieJar(error);
       return Promise.reject(error);
     });
-
   }
 
   isLoggedIn() {
@@ -82,16 +99,14 @@ class Voltalis {
 
   getMainSite() {
     this.ensureIsLoggedIn();
-
     return this.user.subscriber.siteList.find(site => site.isMain);
   }
 
   getModulators() {
     this.ensureIsLoggedIn();
-
     return this.getMainSite().modulatorList;
   }
-  
+
   async login() {
     let res;
     try {
@@ -99,7 +114,7 @@ class Voltalis {
     } catch (err) {
       this.user = null;
 
-      if(err.response) {  
+      if(err.response) {
         if(err.response.status === 401){
           throw new Error('Bad Credentials');
         }
@@ -114,8 +129,8 @@ class Voltalis {
     return this.user;
   }
 
-  async fetchImmediateConsumptionInkW() {
-    return this.api.get('/siteData/immediateConsumptionInkW.json').then(({data}) => data);
+  fetchImmediateConsumptionInkW() {
+    return this.observableApi.get('/siteData/immediateConsumptionInkW.json');
   }
 }
 

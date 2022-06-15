@@ -14,7 +14,9 @@
     "dependencies": {
         "axios": "^0.27.2",
         "axios-cookiejar-support": "^4.0.2",
+        "axios-observable": "^1.5.0",
         "node-cron": "^3.0.1",
+        "rxjs": "^7.5.5",
         "tough-cookie": "^4.0.0",
         "uuid": "^8.3.2"
     },
