@@ -21,7 +21,7 @@ class Voltalis {
       username,
       stayLoggedIn: "true",
     }
-    this.cookiePath = process.env.NODE_ENV === 'production' ? '/data/cookies.json' : path.join(__dirname, 'cookies.json');
+    this.cookiePath = process.env.NODE_ENV === 'production' ? '/data/cookies.json' : path.join(__dirname, '../../cookies.json');
 
     this.user = null;
 
