@@ -1,6 +1,15 @@
 # Changelog
 
 <!-- changelog_start -->
+## 1.2.0 (2022-06-15)
+
+- docs: add README
+- feat: run cron every 10th minute
+- refactor: extract Sensor class
+- chore: change addon description
+- refactor: improve code structure
+- chore: add postversion script to generate Changelog
+- chore: improve readme
 ## 1.1.2 (2022-06-15)
 
 - chore: release 1.1.2
