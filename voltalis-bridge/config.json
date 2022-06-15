@@ -1,8 +1,8 @@
 {
   "slug": "voltalis_bridge",
   "name": "Voltalis Bridge",
-  "version": "1.0.0",
-  "url": "https://github.com/zaosoula/ha-voltalis-bridge",
+  "version": "1.0.1",
+  "url": "https://github.com/zaosoula/ha-voltalis",
   "stage": "stable",
   "description": "Bridge to Voltalis services. Built by Zao Soula <https://github.com/zaosoula>",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],

@@ -1,12 +1,12 @@
 {
     "name": "voltalis_bridge",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Volalis Bridge",
     "author": "Zao Soula <https://github.com/zaosoula>",
     "main": "index.js",
     "scripts": {
         "start": "node index.js",
-        "dev": "nodemon index.js",
+        "dev": "nodemon index.js"
     },
     "dependencies": {
         "axios": "^0.27.2",
