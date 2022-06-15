@@ -10,12 +10,8 @@ registerSensor(hass);
 
 console.log(`Initializing Voltalis API.`);
 const voltalis = new Voltalis(CONFIG.username, CONFIG.password);
-voltalis.login().then(() => {
-	console.log('Connected to Voltalis API.');
-});
 
-
-cron.schedule('* * * * *', async () => {
+const updateImmediateConsumptionInkW = async () => {
 	if(!voltalis.isLoggedIn()) {
 		console.log('[ImmediateConsumptionInkW] Voltalis API not logged in.')
 		return;
@@ -25,11 +21,20 @@ cron.schedule('* * * * *', async () => {
 
 	const data = await voltalis.fetchImmediateConsumptionInkW();
 
-	hass.sensors.voltalis_immediate_consumption.update({
+	console.log('[ImmediateConsumptionInkW]', hass.sensors.voltalis_immediate_consumption.update);
+
+	await hass.sensors.voltalis_immediate_consumption.update({
 		state: data.immediateConsumptionInkW.consumption,
 	})
 
-	hass.sensors.voltalis_consumption.update({
+	await hass.sensors.voltalis_consumption.update({
 		state: data.immediateConsumptionInkW.consumption * (data.immediateConsumptionInkW.duration / 3600),
 	})
+}
+
+cron.schedule('*/10 * * * *', updateImmediateConsumptionInkW);
+
+voltalis.login().then(() => {
+	console.log('Connected to Voltalis API.');
+	updateImmediateConsumptionInkW();
 });
