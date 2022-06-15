@@ -1,6 +1,6 @@
 const Voltalis = require("./voltalis");
-const HomeAssistant = require('homeassistant');
 const cron = require('node-cron');
+const HomeAssistant = require("./homeassistant");
 
 const CONFIG = {
 	username: process.env.VOLTALIS_USERNAME,
@@ -12,11 +12,7 @@ if (CONFIG.username === undefined && CONFIG.password === undefined) {
 	process.exit(22)
 }
 
-const hass = new HomeAssistant({
-  host: 'http://supervisor/core/api',
-  token: process.env.SUPERVISOR_TOKEN,
-  ignoreCert: false
-});
+const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN);
 
 console.log(`Initializing Voltalis API.`);
 const voltalis = new Voltalis(CONFIG.username, CONFIG.password);
@@ -35,7 +31,7 @@ cron.schedule('* * * * *', async () => {
 
 	const data = await voltalis.fetchImmediateConsumptionInkW();
 
-	console.log(await hass.states.update('sensor', 'voltalis_immediate_consumption', {
+	hass.updateSensor('voltalis_immediate_consumption', {
 		state: data.immediateConsumptionInkW.consumption,
 		attributes: {
 			friendly_name: 'Voltalis Immediate Consumption',
@@ -43,5 +39,9 @@ cron.schedule('* * * * *', async () => {
 			unit_of_measurement: 'kW',
 			device_class: 'power'
 		}
-	}));
+	}).then((data) => {
+		console.log('Sensor updated', data);
+	}).catch((error) => {
+		console.log('Sensor update error', error);
+	})
 });
