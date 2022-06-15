@@ -1,0 +1,26 @@
+{
+  "slug": "voltalis_bridge",
+  "name": "Voltalis Bridge",
+  "version": "1.0.0",
+  "url": "https://github.com/zaosoula/ha-voltalis-bridge",
+  "stage": "stable",
+  "description": "Bridge to Voltalis services. Built by Zao Soula <https://github.com/zaosoula>",
+  "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "startup": "services",
+  "boot": "auto",
+  "ports": {
+    "8000/tcp": 8000
+  },
+  "ports_description": {
+    "8000/tcp": "Webservice API"
+  },
+  "map": [],
+  "options": {
+  	"username": "Voltalis Username",
+  	"password": "Voltalis Password"
+  },
+  "schema": {
+    "username": "str",
+    "password": "str"
+  }
+}
