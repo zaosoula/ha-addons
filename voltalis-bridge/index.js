@@ -1,5 +1,5 @@
 const express = require("express")
-const Voltalis = require("./voltalis.js");
+const Voltalis = require("./voltalis");
 
 const port = 8000;
 

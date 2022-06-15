@@ -11,6 +11,7 @@ RUN apk add --no-cache \
 
 COPY package.json /
 COPY index.js /
+COPY voltalis.js /
 RUN cd / && npm install --unsafe-perm
 
 COPY run.sh /
