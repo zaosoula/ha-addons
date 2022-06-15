@@ -14,6 +14,22 @@ if (CONFIG.username === undefined && CONFIG.password === undefined) {
 
 const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN);
 
+hass.registerSensor('voltalis_immediate_consumption', {
+	friendly_name: 'Voltalis Immediate Consumptio (kW)',
+	icon: 'mdi:home-lightning-bolt-outline',
+	unit_of_measurement: 'kW',
+	device_class: 'power',
+	state_class: 'measurement'
+});
+
+hass.registerSensor('voltalis_consumption', {
+	friendly_name: 'Voltalis Consumption (kWh)',
+	icon: 'mdi:home-lightning-bolt-outline',
+	unit_of_measurement: 'kWh',
+	device_class: 'energy',
+	state_class: 'measurement'
+});
+
 console.log(`Initializing Voltalis API.`);
 const voltalis = new Voltalis(CONFIG.username, CONFIG.password);
 voltalis.login().then(() => {
@@ -31,26 +47,14 @@ cron.schedule('* * * * *', async () => {
 
 	const data = await voltalis.fetchImmediateConsumptionInkW();
 
-	hass.updateSensor('voltalis_immediate_consumption', {
+	hass.sensors.voltalis_immediate_consumption.update({
 		state: data.immediateConsumptionInkW.consumption,
-		attributes: {
-			friendly_name: 'Voltalis Immediate Consumption',
-			icon: 'mdi:home-lightning-bolt-outline',
-			unit_of_measurement: 'kW',
-			device_class: 'power'
-		}
 	}).catch((error) => {
 		console.log('Sensor update error', error);
 	})
 
-	hass.updateSensor('voltalis_consumption', {
+	hass.sensors.voltalis_consumption({
 		state: data.immediateConsumptionInkW.consumption * (data.immediateConsumptionInkW.duration / 3600),
-		attributes: {
-			friendly_name: 'Voltalis Consumption',
-			icon: 'mdi:home-lightning-bolt-outline',
-			unit_of_measurement: 'kWh',
-			device_class: 'energy'
-		}
 	}).catch((error) => {
 		console.log('Sensor update error', error);
 	})
