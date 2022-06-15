@@ -1,7 +1,7 @@
 {
   "slug": "voltalis_bridge",
   "name": "Voltalis Bridge",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "url": "https://github.com/zaosoula/ha-addons/tree/main/voltalis-bridge",
   "stage": "stable",
   "description": "Bridge to Voltalis services. Built by Zao Soula <https://github.com/zaosoula>",
@@ -12,12 +12,6 @@
   "homeassistant_api": true,
   "boot": "auto",
   "init": false,
-  "ports": {
-    "8000/tcp": 8000
-  },
-  "ports_description": {
-    "8000/tcp": "Webservice API"
-  },
   "map": [],
   "options": {
   	"username": "",
