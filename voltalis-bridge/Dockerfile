@@ -9,10 +9,12 @@ RUN apk add --no-cache \
     npm \
     git
 
+RUN npm install -g yarn
+
 COPY package.json /
 COPY index.js /
 COPY voltalis.js /
-RUN cd / && npm install --unsafe-perm
+RUN cd / && yarn install 
 
 COPY run.sh /
 RUN chmod a+x /run.sh
