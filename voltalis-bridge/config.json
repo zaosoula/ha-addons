@@ -5,7 +5,13 @@
   "url": "https://github.com/zaosoula/ha-addons/tree/main/voltalis-bridge",
   "stage": "stable",
   "description": "Bridge to Voltalis services. Built by Zao Soula <https://github.com/zaosoula>",
-  "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "arch": [
+    "armhf",
+    "armv7",
+    "aarch64",
+    "amd64",
+    "i386"
+  ],
   "startup": "services",
   "homeassistant": "2022.6.5",
   "hassio_api": true,
@@ -14,8 +20,8 @@
   "init": false,
   "map": [],
   "options": {
-  	"username": "",
-  	"password": ""
+    "username": "",
+    "password": ""
   },
   "schema": {
     "username": "str",
