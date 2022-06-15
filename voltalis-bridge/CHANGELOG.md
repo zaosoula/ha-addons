@@ -1,6 +1,12 @@
 # Changelog
 
 <!-- changelog_start -->
+## 1.3.0 (2022-06-15)
+
+- feat: use rxjs for polling values
+- fix: use correct sensor state_class
+- fix: fix cookiePath in dev mode
+- fix: add password in config error message
 ## 1.2.0 (2022-06-15)
 
 - docs: add README
