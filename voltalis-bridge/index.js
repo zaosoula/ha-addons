@@ -35,7 +35,7 @@ cron.schedule('* * * * *', async () => {
 
 	const data = await voltalis.fetchImmediateConsumptionInkW();
 
-	hass.states.update('sensor', 'voltalis_immediate_consumption', {
+	console.log(await hass.states.update('sensor', 'voltalis_immediate_consumption', {
 		state: data.immediateConsumptionInkW.consumption,
 		attributes: {
 			friendly_name: 'Voltalis Immediate Consumption',
@@ -43,5 +43,5 @@ cron.schedule('* * * * *', async () => {
 			unit_of_measurement: 'kW',
 			device_class: 'power'
 		}
-	});
+	}));
 });
