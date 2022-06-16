@@ -1,5 +1,11 @@
-class Sensor {
-  constructor(name, attributes, api) {
+import { AxiosInstance } from "axios";
+
+export class Sensor {
+  public name: string;
+  private api: AxiosInstance;
+  public attributes: Record<string, unknown>;
+  public state: Record<string, unknown> | undefined;
+  constructor(name: string, attributes: Record<string, unknown>, api: AxiosInstance) {
     this.name = name;
     this.api = api;
     this.attributes = attributes;
@@ -23,7 +29,10 @@ class Sensor {
       });
   }
 
-  update(payload) {
+  update(payload: {
+    state: unknown,
+    attributes?: Record<string, unknown>
+  }) {
     console.log(`[hass] updating sensor.${this.name}`, { payload });
 
     const _state = {
@@ -45,5 +54,3 @@ class Sensor {
       });
   }
 }
-
-module.exports = Sensor;

@@ -1,4 +1,6 @@
-module.exports = (hass) => {
+import { HomeAssistant } from "./lib/homeassistant";
+
+export const registerSensors = (hass: HomeAssistant) => {
   hass.registerSensor('voltalis_immediate_consumption', {
     friendly_name: 'Voltalis Immediate Consumption (W)',
     icon: 'mdi:home-lightning-bolt-outline',

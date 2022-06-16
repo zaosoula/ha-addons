@@ -1,11 +1,11 @@
-const Voltalis = require("./lib/voltalis");
-const HomeAssistant = require("./lib/homeassistant");
-const CONFIG = require('./config');
-const registerSensors = require('./sensors');
-const registerPollers = require('./pollers');
+import { Voltalis } from "./lib/voltalis";
+import { HomeAssistant} from "./lib/homeassistant";
+import { CONFIG } from "./config";
+import {registerSensors} from "./sensors";
+import {registerPollers} from "./pollers";
 
 const voltalis = new Voltalis(CONFIG.username, CONFIG.password);
-const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN);
+const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN!);
 
 (async () => {
 	await voltalis.login()

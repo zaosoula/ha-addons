@@ -11,9 +11,10 @@ RUN apk add --no-cache \
 
 COPY package.json /
 COPY yarn.lock /
+COPY tsconfig.json /
 COPY src/ /src/
 
-RUN cd / && yarn install 
+RUN cd / && yarn install && yarn build
 
 COPY run.sh /
 RUN chmod a+x /run.sh

@@ -1,13 +1,35 @@
-const axios = require('axios');
-const { axios: axiosObservable } = require('./poller');
-const fs = require('fs');
-const { wrapper } = require('axios-cookiejar-support');
-const { CookieJar } = require('tough-cookie');
-const path = require('path');
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
+import { axios as axiosObservable } from "./poller";
+import fs from "fs";
+import { wrapper } from "axios-cookiejar-support";
+import { CookieJar } from "tough-cookie";
+import path from "path";
 
+export interface VoltalisSite {
+  id: string;
+  isMain: boolean;
+  modulatorList: unknown[];
+}
 
-class Voltalis {
-  constructor(username, password) {
+export interface VoltalisConsumption {
+  consumption: number;
+  duration: number
+}
+
+export class Voltalis {
+  private credentials: Record<string, unknown>;
+  private cookiePath: string = process.env.NODE_ENV === 'production' ? '/data/cookies.json' : path.join(__dirname, '../../cookies.json');
+  public user: {
+    [key: string]: unknown;
+    subscriber: {
+      siteList: VoltalisSite[]
+    }
+  } | null = null;
+  private jar: CookieJar = new CookieJar();
+  private api: AxiosInstance;
+  private observableApi: axiosObservable;
+
+  constructor(username: string, password: string) {
     this.credentials = {
       id: "",
       alternative_email: "",
@@ -22,18 +44,9 @@ class Voltalis {
       username,
       stayLoggedIn: "true",
     }
-    this.cookiePath = process.env.NODE_ENV === 'production' ? '/data/cookies.json' : path.join(__dirname, '../../cookies.json');
 
-    this.user = null;
-
-    this.initAxios();
-
-    this.fetchImmediateConsumptionInkW = this.fetchImmediateConsumptionInkW.bind(this);
-  }
-
-  initAxios() {
-    let previousCookieJarJSON;
-    const saveCookieJar = (res) => {
+    let previousCookieJarJSON: string;
+    const saveCookieJar = (res: AxiosResponse) => {
       const cookieJarJSON = JSON.stringify(res.config.jar);
       if(cookieJarJSON != previousCookieJarJSON) {
         fs.writeFileSync(this.cookiePath, cookieJarJSON);
@@ -42,19 +55,17 @@ class Voltalis {
     }
 
     if (fs.existsSync(this.cookiePath)) {
-      const cookieJarJSON = fs.readFileSync(this.cookiePath);
+      const cookieJarJSON = fs.readFileSync(this.cookiePath, { encoding: 'utf-8' });
       	const cookies = JSON.parse(cookieJarJSON);
         this.jar = CookieJar.fromJSON(cookies);
         previousCookieJarJSON = cookieJarJSON;
-    }else{
-      this.jar = new CookieJar();
     }
 
     this.observableApi = wrapper(axiosObservable.create({
       withCredentials: true,
       baseURL: 'https://classic.myvoltalis.com/',
       jar: this.jar
-    }));
+    }) as unknown as AxiosInstance) as unknown as axiosObservable;
 
     this.api = wrapper(axios.create({
       withCredentials: true,
@@ -64,6 +75,9 @@ class Voltalis {
 
     this.observableApi.interceptors.request.use((config) => {
       if(this.isLoggedIn()){
+        if(config.headers === undefined){
+          config.headers = {};
+        }
         config.headers['User-Site-Id'] = this.getMainSite().id;
       }
       return config;
@@ -85,7 +99,10 @@ class Voltalis {
       saveCookieJar(error);
       return Promise.reject(error);
     });
+
+    this.fetchImmediateConsumptionInkW = this.fetchImmediateConsumptionInkW.bind(this);
   }
+
 
   isLoggedIn() {
     return this.user !== null;
@@ -97,9 +114,9 @@ class Voltalis {
     }
   }
 
-  getMainSite() {
+  getMainSite(): VoltalisSite {
     this.ensureIsLoggedIn();
-    return this.user.subscriber.siteList.find(site => site.isMain);
+    return this.user!.subscriber.siteList.find(site => site.isMain) as VoltalisSite;
   }
 
   getModulators() {
@@ -111,18 +128,22 @@ class Voltalis {
     let res;
     try {
       res = await this.api.post('/login', this.credentials);
-    } catch (err) {
-      this.user = null;
+    } catch (err: unknown) {
+      if(err instanceof AxiosError) {
+        this.user = null;
 
-      if(err.response) {
-        if(err.response.status === 401){
-          throw new Error('Bad Credentials');
+        if(err.response) {
+          if(err.response.status === 401){
+            throw new Error('Bad Credentials');
+          }
         }
+
+
+        console.error(err?.response);
+        throw new Error('Unable to login');
       }
 
-
-      console.error(err?.response);
-      throw new Error('Unable to login');
+      throw err;
     }
 
     this.user = res.data;
@@ -130,8 +151,8 @@ class Voltalis {
   }
 
   fetchImmediateConsumptionInkW() {
-    return this.observableApi.get('/siteData/immediateConsumptionInkW.json');
+    return this.observableApi.get<{
+      immediateConsumptionInkW: VoltalisConsumption
+    }>('/siteData/immediateConsumptionInkW.json');
   }
 }
-
-module.exports = Voltalis;
