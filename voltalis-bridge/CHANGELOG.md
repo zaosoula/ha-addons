@@ -1,6 +1,11 @@
 # Changelog
 
 <!-- changelog_start -->
+## 1.4.0 (2022-06-16)
+
+- fix: run consumption poller every 5 minutes
+- refactor: rewrite in typescript
+- fix: type in sensors friendly name
 ## 1.3.0 (2022-06-15)
 
 - feat: use rxjs for polling values

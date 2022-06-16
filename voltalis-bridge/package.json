@@ -1,6 +1,6 @@
 {
     "name": "voltalis-bridge",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "description": "Volalis Bridge",
     "author": "Zao Soula <https://github.com/zaosoula>",
     "main": "dist/index.js",
@@ -10,7 +10,7 @@
         "dev": "ts-node-dev src/index.ts",
         "docker:build": "docker build --no-cache --build-arg BUILD_FROM=\"homeassistant/amd64-base:latest\" -t local/my-test-addon .",
         "docker:run": "docker run --rm -v /tmp/my_test_data:/data local/my-test-addon",
-        "postversion": "node ./bin/postversion"
+        "postversion": "node ./bin/postversion && git add config.json CHANGELOG.md"
     },
     "dependencies": {
         "axios": "^0.27.2",
