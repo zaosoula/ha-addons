@@ -1,6 +1,6 @@
 module.exports = (hass) => {
   hass.registerSensor('voltalis_immediate_consumption', {
-    friendly_name: 'Voltalis Immediate Consumptio (kW)',
+    friendly_name: 'Voltalis Immediate Consumption (W)',
     icon: 'mdi:home-lightning-bolt-outline',
     unit_of_measurement: 'W',
     device_class: 'power',
@@ -8,7 +8,7 @@ module.exports = (hass) => {
   });
 
   hass.registerSensor('voltalis_consumption', {
-    friendly_name: 'Voltalis Consumption (kWh)',
+    friendly_name: 'Voltalis Consumption (Wh)',
     icon: 'mdi:home-lightning-bolt-outline',
     unit_of_measurement: 'Wh',
     device_class: 'energy',
