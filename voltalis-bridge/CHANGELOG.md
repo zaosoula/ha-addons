@@ -1,6 +1,9 @@
 # Changelog
 
 <!-- changelog_start -->
+## 1.4.1 (2022-06-27)
+
+- feat: improve data accuracy
 ## 1.4.0 (2022-06-16)
 
 - fix: run consumption poller every 5 minutes
