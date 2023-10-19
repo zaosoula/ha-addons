@@ -300,7 +300,7 @@ export class Voltalis {
     }
 
     this.manualSettings = res.data;
-    return this.manualSettings;
+    return true;
   }
 
   async putmanualSettings(id: number, idAppliance: number, mode: string) {
@@ -334,8 +334,7 @@ export class Voltalis {
       throw err;
     }
 
-    this.manualSettings = res.data;
-    await this.fetchmanualSettings();
-    return this.manualSettings;
+    this.fetchmanualSettings();
+    return true;
   }
 }

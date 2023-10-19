@@ -19,7 +19,6 @@ app.use(bodyParser.json());
 	await voltalis.fetchMe();
 	await voltalis.fetchmanualSettings();
 	const sensors = registerSensors(hass);
-	// const pollers = registerPollers(voltalis);
 	const settings =  voltalis.getManualSettings();
 	voltalis.fetchImmediateConsumptionInW();
 
@@ -39,6 +38,7 @@ app.use(bodyParser.json());
 	settings?.forEach ((setting => {
 		app.post('/setting/' + setting.id, (req, res) => {
 			voltalis.putmanualSettings(setting.id, setting.idAppliance, req.body.mode)
+			voltalis.getManualSettings();
 			res.send(setting.applianceName);
 		  });
 		  app.get('/setting/' + setting.id, (req, res) => {
