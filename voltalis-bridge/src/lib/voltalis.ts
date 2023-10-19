@@ -1,5 +1,4 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
-import { axios as axiosObservable } from "./poller";
 // import fs from "fs";
 import { wrapper } from "axios-cookiejar-support";
 // import { CookieJar } from "tough-cookie";
@@ -125,7 +124,6 @@ export class Voltalis {
   public manualSettings: manualSettings[] | null = null;
   public voltalisConsumption:VoltalisConsumption | null = null;
   private api: AxiosInstance;
-  private observableApi: axiosObservable;
 
   constructor(login: string, password: string) {
     this.credentials = {
@@ -133,26 +131,14 @@ export class Voltalis {
       password,
     }
 
-    this.observableApi = wrapper(axiosObservable.create({
-      withCredentials: true,
-      baseURL: 'https://api.myvoltalis.com/',
-      // jar: this.jar
-    }) as unknown as AxiosInstance) as unknown as axiosObservable;
+
 
     this.api = wrapper(axios.create({
       withCredentials: true,
       baseURL: 'https://api.myvoltalis.com/',
     }));
 
-    this.observableApi.interceptors.request.use((config) => {
-      if(this.isLoggedIn()){
-        if(config.headers === undefined){
-          config.headers = {};
-        }
-        config.headers['Authorization'] = "Bearer " + this.getToken();
-      }
-      return config;
-    });
+
 
     this.api.interceptors.request.use((config) => {
       if(this.isLoggedIn()){
@@ -164,14 +150,6 @@ export class Voltalis {
       return config;
     });
 
-    this.observableApi.interceptors.response.use(function (response) {
-      return response;
-    }, function (error) {
-      if (error.response) {
-        console.error('Error code', error.response);
-      }
-      return error;
-    });
   }
 
 

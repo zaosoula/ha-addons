@@ -2,7 +2,6 @@ import {  Voltalis } from "./lib/voltalis";
 import { HomeAssistant} from "./lib/homeassistant";
 import { CONFIG } from "./config";
 import {registerSensors} from "./sensors";
-// import {registerPollers} from "./pollers";
 import express from 'express';
 import bodyParser from 'body-parser';
 import cron from "node-cron";
