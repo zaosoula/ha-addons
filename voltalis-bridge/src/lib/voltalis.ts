@@ -1,76 +1,147 @@
 import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
 import { axios as axiosObservable } from "./poller";
-import fs from "fs";
+// import fs from "fs";
 import { wrapper } from "axios-cookiejar-support";
-import { CookieJar } from "tough-cookie";
-import path from "path";
+// import { CookieJar } from "tough-cookie";
+// import path from "path";
 
-export interface VoltalisSite {
-  id: string;
-  isMain: boolean;
-  modulatorList: unknown[];
+
+export interface Phone {
+  phoneType: any
+  phoneNumber: string
+  isDefault: boolean
+}
+
+export interface DefaultSite {
+  id: number
+  address: string
+  name: any
+  postalCode: string
+  city: string
+  country: string
+  timezone: string
+  state: any
+  voltalisVersion: string
+  installationDate: string
+  dataStart: string
+  hasGlobalConsumptionMeasure: boolean
+  hasDsoMeasure: boolean
+  default: boolean
+}
+
+export interface DisplayGroup {
+  name: string
+  rights: Right[]
+  resources: Resources
+}
+
+export interface Right {
+  name: string
+  enabled: boolean
+  type: string
+}
+
+export interface Resources {
+  favicon: string
+  fontcolor: string
+  logo: string
+  headercolor: string
+  secondarycolor: string
+  primarycolor: string
+  font: string
+}
+
+export interface ManagedAppliances {
+  id: number
+  name: string
+  applianceType: string
+  modulatorType: string
+  availableModes: string[]
+  voltalisVersion: string
+  programming: Programming
+  heatingLevel: number
+}
+
+export interface Programming {
+  progType: string
+  progName: string
+  idManualSetting: any
+  isOn: boolean
+  untilFurtherNotice: any
+  mode: string
+  idPlanning: number
+  endDate: any
+  temperatureTarget: number
+  defaultTemperature: number
+}
+
+export interface manualSettings {
+  id: number
+  enabled: boolean
+  idAppliance: number
+  applianceName: string
+  applianceType: string
+  untilFurtherNotice: boolean
+  mode: string
+  heatingLevel: number
+  endDate: string
+  temperatureTarget: number
+  isOn: boolean
 }
 
 export interface VoltalisConsumption {
-  consumption: number;
-  duration: number
+  aggregationStepInSeconds: number
+  consumptions: Consumption[]
+}
+
+export interface Consumption {
+  stepTimestampInUtc: string
+  totalConsumptionInWh: number
+  totalConsumptionInCurrency: number
 }
 
 export class Voltalis {
   private credentials: Record<string, unknown>;
-  private cookiePath: string = process.env.NODE_ENV === 'production' ? '/data/cookies.json' : path.join(__dirname, '../../cookies.json');
   public user: {
-    [key: string]: unknown;
+    token: string
+    oldMyVoltalisUrl: any
     subscriber: {
-      siteList: VoltalisSite[]
+      siteList: string
     }
   } | null = null;
-  private jar: CookieJar = new CookieJar();
+  public me: {
+    id: number
+    firstname: string
+    lastname: string
+    email: string
+    phones: Phone[]
+    defaultSite: DefaultSite
+    otherSites: any[]
+    displayGroup: DisplayGroup
+    firstConnection: boolean
+    migratedUser: boolean
+    } | null = null;
+  public managedAppliances: ManagedAppliances[] | null = null;
+  public manualSettings: manualSettings[] | null = null;
+  public voltalisConsumption:VoltalisConsumption | null = null;
   private api: AxiosInstance;
   private observableApi: axiosObservable;
 
-  constructor(username: string, password: string) {
+  constructor(login: string, password: string) {
     this.credentials = {
-      id: "",
-      alternative_email: "",
-      email: "",
-      firstname: "",
-      lastname: "",
-      login: "",
+      login,
       password,
-      phone: "",
-      country: "",
-      selectedSiteId: "",
-      username,
-      stayLoggedIn: "true",
-    }
-
-    let previousCookieJarJSON: string;
-    const saveCookieJar = (res: AxiosResponse) => {
-      const cookieJarJSON = JSON.stringify(res.config.jar);
-      if(cookieJarJSON != previousCookieJarJSON) {
-        fs.writeFileSync(this.cookiePath, cookieJarJSON);
-        previousCookieJarJSON = cookieJarJSON;
-      }
-    }
-
-    if (fs.existsSync(this.cookiePath)) {
-      const cookieJarJSON = fs.readFileSync(this.cookiePath, { encoding: 'utf-8' });
-      	const cookies = JSON.parse(cookieJarJSON);
-        this.jar = CookieJar.fromJSON(cookies);
-        previousCookieJarJSON = cookieJarJSON;
     }
 
     this.observableApi = wrapper(axiosObservable.create({
       withCredentials: true,
-      baseURL: 'https://classic.myvoltalis.com/',
-      jar: this.jar
+      baseURL: 'https://api.myvoltalis.com/',
+      // jar: this.jar
     }) as unknown as AxiosInstance) as unknown as axiosObservable;
 
     this.api = wrapper(axios.create({
       withCredentials: true,
-      baseURL: 'https://classic.myvoltalis.com/',
-      jar: this.jar
+      baseURL: 'https://api.myvoltalis.com/',
     }));
 
     this.observableApi.interceptors.request.use((config) => {
@@ -78,7 +149,17 @@ export class Voltalis {
         if(config.headers === undefined){
           config.headers = {};
         }
-        config.headers['User-Site-Id'] = this.getMainSite().id;
+        config.headers['Authorization'] = "Bearer " + this.getToken();
+      }
+      return config;
+    });
+
+    this.api.interceptors.request.use((config) => {
+      if(this.isLoggedIn()){
+        if(config.headers === undefined){
+          config.headers = {};
+        }
+        config.headers['Authorization'] = "Bearer " + this.getToken();
       }
       return config;
     });
@@ -91,16 +172,6 @@ export class Voltalis {
       }
       return error;
     });
-
-   this.api.interceptors.response.use(function (response) {
-      saveCookieJar(response);
-      return response;
-    }, function (error) {
-      saveCookieJar(error);
-      return Promise.reject(error);
-    });
-
-    this.fetchImmediateConsumptionInkW = this.fetchImmediateConsumptionInkW.bind(this);
   }
 
 
@@ -114,20 +185,23 @@ export class Voltalis {
     }
   }
 
-  getMainSite(): VoltalisSite {
+   getToken() {
     this.ensureIsLoggedIn();
-    return this.user!.subscriber.siteList.find(site => site.isMain) as VoltalisSite;
+    return this.user!.token;
   }
-
-  getModulators() {
-    this.ensureIsLoggedIn();
-    return this.getMainSite().modulatorList;
+   getManagedAppliances() {
+    return this.managedAppliances;
   }
-
+  getManualSettings() {
+    return this.manualSettings;
+  }
+  getManualSetting(id: number) {
+    return this.manualSettings?.find(setting => setting.id = id);
+  }
   async login() {
     let res;
     try {
-      res = await this.api.post('/login', this.credentials);
+      res = await this.api.post('/auth/login', this.credentials);
     } catch (err: unknown) {
       if(err instanceof AxiosError) {
         this.user = null;
@@ -145,14 +219,145 @@ export class Voltalis {
 
       throw err;
     }
-
     this.user = res.data;
     return this.user;
   }
 
-  fetchImmediateConsumptionInkW() {
-    return this.observableApi.get<{
-      immediateConsumptionInkW: VoltalisConsumption
-    }>('/siteData/immediateConsumptionInkW.json');
+  async fetchImmediateConsumptionInW() {
+    let res;
+    try {
+      res = await  this.api.get("api/site/" + this.me?.defaultSite.id + "/consumption/realtime?mode=TEN_SECONDS&numPoints=1");
+    } catch (err: unknown) {
+      if(err instanceof AxiosError) {
+        this.user = null;
+
+        if(err.response) {
+          if(err.response.status === 401){
+            throw new Error('Bad Credentials');
+          }
+        }
+
+
+        console.error(err?.response);
+        throw new Error('Unable to login');
+      }
+
+      throw err;
+    }
+    this.voltalisConsumption = res.data;
+    return this.voltalisConsumption;  
+}
+
+  async fetchMe() {
+    let res;
+    try {
+      res = await this.api.get('/api/account/me');
+    } catch (err: unknown) {
+      if(err instanceof AxiosError) {
+        this.user = null;
+
+        if(err.response) {
+          if(err.response.status === 401){
+            throw new Error('expired token');
+          }
+        }
+
+
+        console.error(err?.response);
+        throw new Error('Unable to fetch account details');
+      }
+
+      throw err;
+    }
+
+    this.me = res.data;
+    return this.me;
+  }
+
+  async fetchManagedAppliances() {
+    let res;
+    try {
+      res = await this.api.get("api/site/" + this.me?.defaultSite.id + "/managed-appliance");
+    } catch (err: unknown) {
+      if(err instanceof AxiosError) {
+        this.user = null;
+
+        if(err.response) {
+          if(err.response.status === 401){
+            throw new Error('expired token');
+          }
+        }
+
+        console.error(err?.response);
+        throw new Error('Unable to fetch appliances');
+      }
+
+      throw err;
+    }
+
+    this.managedAppliances = res.data;
+    return this.managedAppliances;
+  }
+
+  
+  async fetchmanualSettings() {
+    let res;
+    try {
+      res = await this.api.get("api/site/" + this.me?.defaultSite.id + "/manualsetting");
+    } catch (err: unknown) {
+      if(err instanceof AxiosError) {
+        this.user = null;
+
+        if(err.response) {
+          if(err.response.status === 401){
+            throw new Error('expired token');
+          }
+        }
+
+        console.error(err?.response);
+        throw new Error('Unable to fetch manual settings');
+      }
+
+      throw err;
+    }
+
+    this.manualSettings = res.data;
+    return this.manualSettings;
+  }
+
+  async putmanualSettings(id: number, idAppliance: number, mode: string) {
+    console.log("body", id, idAppliance,mode)
+    let res;
+    try {
+      const body = {
+        enabled: true,
+        endDate: null,
+        idAppliance: idAppliance,
+        isOn: true,
+        mode: mode,
+        temperatureTarget: 20.5,
+        untilFurtherNotice: true,
+      }
+      res = await this.api.put("api/site/" + this.me?.defaultSite.id + "/manualsetting/" + id, body);
+    } catch (err: unknown) {
+      if(err instanceof AxiosError) {
+        this.user = null;
+
+        if(err.response) {
+          if(err.response.status === 401){
+            throw new Error('expired token');
+          }
+        }
+
+        console.error(err?.response);
+        throw new Error('Unable to post manual settings' + mode);
+      }
+
+      throw err;
+    }
+
+    this.manualSettings = res.data;
+    await this.fetchmanualSettings();
+    return this.manualSettings;
   }
 }

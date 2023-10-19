@@ -8,7 +8,7 @@ The bridge can be used to monitor consumption, and enabled/disabled devices.
 
 ## Installation
 
-1) In Home Assistant go to `Supervisor` > `Add-on Store` > dots top-right > `Repositories` and add the repository URL `https://github.com/zaosoula/ha-addons`.
+1) In Home Assistant go to `Supervisor` > `Add-on Store` > dots top-right > `Repositories` and add the repository URL `https://github.com/alexinthesky/ha-addons`.
 2) Click on `Voltalis Bridge` > `INSTALL` > Wait for a few min, as Docker container is getting built locally.
 3) Click on `Configuration`, and provide your Voltalis credentials then click `SAVE`.
 4) Click on `START`
