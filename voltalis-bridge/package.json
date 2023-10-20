@@ -1,35 +1,35 @@
 {
-    "name": "voltalis-bridge",
-    "version": "1.4.4",
-    "description": "Volalis Bridge",
-    "author": "Zao Soula <https://github.com/alexinthesky>",
-    "main": "dist/index.js",
-    "scripts": {
-        "build": "tsc",
-        "start": "node dist/index.js",
-        "dev": "ts-node-dev src/index.ts",
-        "docker:build": "docker build --no-cache --build-arg BUILD_FROM=\"homeassistant/amd64-base:latest\" -t local/my-test-addon .",
-        "docker:run": "docker run --rm -v /tmp/my_test_data:/data local/my-test-addon",
-        "postversion": "node ./bin/postversion && git add config.json CHANGELOG.md"
-    },
-    "dependencies": {
-        "axios": "^0.27.2",
-        "axios-cookiejar-support": "^4.0.2",
-        "axios-observable": "^1.5.0",
-        "node-cron": "^3.0.2",
-        "rxjs": "^7.5.5",
-        "tough-cookie": "^4.0.0",
-        "uuid": "^8.3.2"
-    },
-    "devDependencies": {
-        "@types/express": "^4.17.20",
-        "@types/node": "^18.18.6",
-        "@types/node-cron": "^3.0.1",
-        "@types/tough-cookie": "^4.0.2",
-        "body-parser": "^1.20.2",
-        "express": "^4.18.2",
-        "shelljs": "^0.8.5",
-        "ts-node-dev": "^2.0.0",
-        "typescript": "^4.9.5"
-    }
+  "name": "voltalis-bridge",
+  "version": "1.4.4",
+  "description": "Volalis Bridge",
+  "author": "Zao Soula <https://github.com/alexinthesky>",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev src/index.ts",
+    "docker:build": "docker build --no-cache --build-arg BUILD_FROM=\"homeassistant/amd64-base:latest\" -t local/my-test-addon .",
+    "docker:run": "docker run --rm -v /tmp/my_test_data:/data local/my-test-addon",
+    "postversion": "node ./bin/postversion && git add config.json CHANGELOG.md"
+  },
+  "dependencies": {
+    "axios": "^0.27.2",
+    "axios-cookiejar-support": "^4.0.2",
+    "axios-observable": "^1.5.0",
+    "node-cron": "^3.0.2",
+    "rxjs": "^7.5.5",
+    "tough-cookie": "^4.0.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.20",
+    "@types/node": "^18.18.6",
+    "@types/node-cron": "^3.0.1",
+    "@types/tough-cookie": "^4.0.2",
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "shelljs": "^0.8.5",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^4.9.5"
+  }
 }

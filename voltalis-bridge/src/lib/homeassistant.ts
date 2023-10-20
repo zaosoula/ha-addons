@@ -6,10 +6,10 @@ export class HomeAssistant {
   private api: AxiosInstance;
   public sensors: Record<string, Sensor>;
   constructor(token: string) {
-    this.options = {headers: {'Authorization': 'Bearer ' + token}}
+    this.options = { headers: { Authorization: "Bearer " + token } };
     this.api = axios.create({
-      baseURL: 'http://supervisor/core/api',
-      headers: {'Authorization': 'Bearer ' + token}
+      baseURL: "http://supervisor/core/api",
+      headers: { Authorization: "Bearer " + token },
     });
     this.sensors = {};
   }

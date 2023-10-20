@@ -1,20 +1,24 @@
 # Changelog
 
 <!-- changelog_start -->
+
 ## 1.4.1 (2022-06-27)
 
 - feat: improve data accuracy
+
 ## 1.4.0 (2022-06-16)
 
 - fix: run consumption poller every 5 minutes
 - refactor: rewrite in typescript
 - fix: type in sensors friendly name
+
 ## 1.3.0 (2022-06-15)
 
 - feat: use rxjs for polling values
 - fix: use correct sensor state_class
 - fix: fix cookiePath in dev mode
 - fix: add password in config error message
+
 ## 1.2.0 (2022-06-15)
 
 - docs: add README
@@ -24,6 +28,7 @@
 - refactor: improve code structure
 - chore: add postversion script to generate Changelog
 - chore: improve readme
+
 ## 1.1.2 (2022-06-15)
 
 - chore: release 1.1.2
