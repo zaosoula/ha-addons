@@ -25,10 +25,10 @@ app.use(bodyParser.json());
   cron.schedule("*/10 * * * * *", () => {
     voltalis.fetchImmediateConsumptionInW();
     // console.log(voltalis.voltalisConsumption?.consumptions.at(0)?.totalConsumptionInWh);
-    sensors.voltalis_immediate_consumption.update({
-      state:
-        voltalis.voltalisConsumption?.consumptions.at(0)?.totalConsumptionInWh,
-    });
+    // sensors.voltalis_immediate_consumption.update({
+    //   state:
+    //     voltalis.voltalisConsumption?.consumptions.at(0)?.totalConsumptionInWh,
+    // });
   });
 
   // settings?.forEach ((setting => {
@@ -42,13 +42,11 @@ app.use(bodyParser.json());
         "putmanualSetting",
         setting.id,
         setting.idAppliance,
-        JSON.parse(req.body),
+        JSON.stringify(req.body),
         req.url.split("/").at(2),
       );
-      if (typeof req.body === "string") {
-        voltalis.putmanualSetting(req.url, JSON.parse(req.body));
-        res.status(200).send("OK");
-      }
+      voltalis.putmanualSetting(req.url, JSON.stringify(req.body));
+      res.status(200).send("OK");
     });
     app.get("/setting/" + setting.id, (req, res) => {
       const mode = voltalis.getManualSetting(setting.id);

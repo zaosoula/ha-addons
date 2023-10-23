@@ -165,7 +165,7 @@ export class Voltalis {
     return this.manualSettings;
   }
   getManualSetting(id: number) {
-    return this.manualSettings?.find((setting) => (setting.id = id));
+    return this.manualSettings?.find((setting) => setting.id === id);
   }
   async login() {
     let res;
@@ -309,7 +309,11 @@ export class Voltalis {
     }
 
     try {
-      console.debug("[putmanualSetting]", mode, id);
+      console.debug(
+        "[putmanualSetting]",
+        this.manualSettings,
+        this.manualSettings?.find((setting) => setting.id === id),
+      );
       const idAppliance = this.getManualSetting(id)?.idAppliance;
       const body = {
         enabled: true,
