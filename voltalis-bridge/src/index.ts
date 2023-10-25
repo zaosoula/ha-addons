@@ -20,31 +20,18 @@ app.use(bodyParser.json());
   await voltalis.fetchmanualSettings();
   const sensors = registerSensors(hass);
   const settings = voltalis.getManualSettings();
-  voltalis.fetchImmediateConsumptionInW();
+  await voltalis.fetchConsumptionInWh();
 
   cron.schedule("*/10 * * * * *", () => {
-    voltalis.fetchImmediateConsumptionInW();
-    // console.log(voltalis.voltalisConsumption?.consumptions.at(0)?.totalConsumptionInWh);
-    // sensors.voltalis_immediate_consumption.update({
-    //   state:
-    //     voltalis.voltalisConsumption?.consumptions.at(0)?.totalConsumptionInWh,
-    // });
+    voltalis.fetchConsumptionInWh();
+    sensors.voltalis_consumption.update({
+      state:
+        voltalis.voltalisConsumption?.consumptions.at(0)?.totalConsumptionInWh,
+    });
   });
 
-  // settings?.forEach ((setting => {
-  // 	app.get('/appliances/' + setting.id, (req, res) => {
-  // 		res.send(setting.applianceName);
-  // 	  });
-  // }))
   settings?.forEach((setting) => {
     app.post("/setting/" + setting.id, (req, res) => {
-      console.log(
-        "putmanualSetting",
-        setting.id,
-        setting.idAppliance,
-        JSON.stringify(req.body),
-        req.url.split("/").at(2),
-      );
       voltalis.putmanualSetting(req.url, JSON.stringify(req.body));
       res.status(200).send("OK");
     });

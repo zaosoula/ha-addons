@@ -190,7 +190,7 @@ export class Voltalis {
     return this.user;
   }
 
-  async fetchImmediateConsumptionInW() {
+  async fetchConsumptionInWh() {
     let res;
     try {
       res = await this.api.get(
@@ -299,21 +299,14 @@ export class Voltalis {
 
   async putmanualSetting(url: string, body: string) {
     let res;
-    console.debug("[putmanualSetting]", url, body);
     const id = Number(url.split("/").at(2));
     let mode;
 
     if (typeof body === "string") {
       mode = JSON.parse(body).mode;
-      console.debug("[putmanualSetting]", typeof body, mode, id);
     }
 
     try {
-      console.debug(
-        "[putmanualSetting]",
-        this.manualSettings,
-        this.manualSettings?.find((setting) => setting.id === id),
-      );
       const idAppliance = this.getManualSetting(id)?.idAppliance;
       const body = {
         enabled: true,
@@ -324,11 +317,6 @@ export class Voltalis {
         temperatureTarget: 20.5,
         untilFurtherNotice: true,
       };
-      console.debug(
-        "POST",
-        "api/site/" + this.me?.defaultSite.id + "/manualsetting/" + id,
-        body,
-      );
       res = await this.api.put(
         "api/site/" + this.me?.defaultSite.id + "/manualsetting/" + id,
         body,
