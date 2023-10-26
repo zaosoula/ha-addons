@@ -196,7 +196,7 @@ export class Voltalis {
       res = await this.api.get(
         "api/site/" +
           this.me?.defaultSite.id +
-          "/consumption/realtime?mode=TEN_SECONDS&numPoints=1",
+          "/consumption/realtime?mode=TEN_MINUTES&numPoints=1",
       );
     } catch (err: unknown) {
       if (err instanceof AxiosError) {
