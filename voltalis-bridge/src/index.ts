@@ -22,7 +22,7 @@ app.use(bodyParser.json());
   const settings = voltalis.getManualSettings();
   await voltalis.fetchConsumptionInWh();
 
-  cron.schedule("*/10 * * * *", () => {
+  cron.schedule("*/2 * * * *", () => {
     voltalis.fetchConsumptionInWh();
     sensors.voltalis_consumption.update({
       state:
