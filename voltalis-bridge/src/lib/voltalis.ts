@@ -215,7 +215,7 @@ export class Voltalis {
       throw err;
     }
     this.voltalisConsumption = res.data;
-    return this.voltalisConsumption;
+    return res.data;
   }
 
   async fetchMe() {

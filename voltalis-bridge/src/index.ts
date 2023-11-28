@@ -8,7 +8,7 @@ import cron from "node-cron";
 
 const app = express();
 const voltalis = new Voltalis(CONFIG.username, CONFIG.password);
-const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN!);
+const hass = new HomeAssistant(CONFIG.token!, CONFIG.uri!);
 
 app.use(bodyParser.json());
 
