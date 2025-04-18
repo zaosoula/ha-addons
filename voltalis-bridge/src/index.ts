@@ -1,76 +1,82 @@
-import { Voltalis } from "./lib/voltalis";
+// index.ts (Corrigé v2 - Appel correct registerSensors et nouveau poller)
+
+import { Voltalis, ApplianceRealtimePower, ApplianceInfo } from "./lib/voltalis"; // Importe les types nécessaires
 import { HomeAssistant } from "./lib/homeassistant";
 import { CONFIG } from "./config";
 import { registerSensors } from "./sensors";
 import { registerPollers } from "./pollers";
 
-// Crée les instances
 const voltalis = new Voltalis(CONFIG.username, CONFIG.password);
 const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN!);
 
-// Fonction principale asynchrone
 (async () => {
     try {
-        // Tente le login (qui inclut maintenant fetchUserInfo)
+        // 1. Login (inclut fetchUserInfo et fetchAppliances)
+        // La méthode login retourne maintenant les infos user, mais on a aussi accès à voltalis.appliances
         await voltalis.login();
-        console.log('Successfully logged in to Voltalis API and fetched user info.');
+        console.log('Successfully logged in and fetched user info and appliance list.');
 
-        // Enregistre les capteurs et les pollers
-        const sensors = registerSensors(hass);
-        const pollers = registerPollers(voltalis); // Suppose que registerPollers utilise fetchImmediateConsumptionInkW
+        // Récupère la liste des appareils après le login
+        const appliances: ApplianceInfo[] = voltalis.appliances;
 
-        // S'abonne aux mises à jour de la consommation "immédiate" (puissance moyenne en W)
-        pollers.immediateConsumptionInkW.subscribe({
-            next: async (averagePowerW: unknown) => { // La donnée reçue est la puissance moyenne en W
-                console.log('[immediateConsumptionInkW Poller] Received data:', averagePowerW);
+        if (!appliances || appliances.length === 0) {
+            console.warn("No appliances found for this site. No individual sensors will be created.");
+        }
 
-                // Vérifie que la donnée est un nombre valide
-                if (typeof averagePowerW === 'number' && isFinite(averagePowerW)) {
+        // 2. Enregistre les capteurs dynamiquement en passant la liste des appareils
+        // L'appel est maintenant correct avec les deux arguments
+        const sensors = registerSensors(hass, appliances);
 
-                    // Met à jour le capteur de puissance instantanée (W)
-                    try {
-                        await sensors.voltalis_immediate_consumption.update({
-                            state: averagePowerW, // Utilise directement la valeur en Watts
-                        });
-                        console.log(`[Sensor Update] voltalis_immediate_consumption updated to: ${averagePowerW} W`);
-                    } catch (updateError) {
-                         console.error("Error updating immediate consumption sensor:", updateError);
-                    }
+        // 3. Enregistre et démarre les pollers (utilise le nouveau poller)
+        const pollers = registerPollers(voltalis);
 
+        // 4. S'abonne aux mises à jour de la puissance des appareils
+        // Utilise le bon nom de poller 'appliancesRealtimePower'
+        pollers.appliancesRealtimePower.subscribe({
+            next: async (appliancePowerData: ApplianceRealtimePower[] | null) => {
+                console.log('[Appliances Poller] Received data:', appliancePowerData);
 
-                    // --- Mise à jour du capteur cumulatif (Wh) ---
-                    // L'API /realtime fournit l'énergie des 10 dernières minutes (totalConsumptionInWh).
-                    // Mettre à jour un compteur cumulatif (state_class: 'total_increasing')
-                    // nécessite soit une valeur toujours croissante, soit un reset périodique.
-                    // Utiliser directement l'énergie des 10min n'est pas correct pour un total.
-                    // Il faudrait idéalement un endpoint API qui donne le total cumulé du jour/mois/etc.
-                    // Ou alors, il faudrait que le plugin calcule lui-même le cumul (complexe).
+                if (appliancePowerData && Array.isArray(appliancePowerData)) {
+                    appliancePowerData.forEach(async (applianceData) => {
+                        // Utilise csApplianceId (numérique) pour chercher dans la Map
+                        const targetSensor = sensors.appliancePowerSensors.get(applianceData.csApplianceId);
 
-                    // Option la plus simple pour l'instant : Ne pas mettre à jour ce capteur depuis cette source.
-                    console.warn("[Sensor Update] voltalis_consumption (Wh) update skipped - requires dedicated cumulative data or calculation logic.");
-
-                    /* // Ancien code (incorrect avec la nouvelle API)
-                    await sensors.voltalis_consumption.update({
-                        state: data.immediateConsumptionInkW.consumption * (data.immediateConsumptionInkW.duration / 3600) * 1000,
-                    })
-                    */
-
+                        if (targetSensor) {
+                            // Vérifie si powerW existe et est valide
+                            if (applianceData.powerW !== undefined && typeof applianceData.powerW === 'number' && isFinite(applianceData.powerW)) {
+                                try {
+                                    // Met à jour le capteur spécifique
+                                    // !! Attention: la méthode s'appelle peut-être autrement que '.update' !!
+                                    // Cela dépend de ce que retourne réellement `hass.register` (voir erreur 6)
+                                    await targetSensor.update({
+                                        state: applianceData.powerW,
+                                    });
+                                    // console.log(`[Sensor Update] Sensor for ${applianceData.csApplianceId} updated to ${applianceData.powerW} W`);
+                                } catch (updateError) {
+                                     console.error(`Error updating sensor for appliance ${applianceData.csApplianceId}:`, updateError);
+                                }
+                            } else {
+                                console.warn(`Invalid or missing power data for appliance ${applianceData.csApplianceId}:`, applianceData.powerW);
+                            }
+                        } else {
+                            console.warn(`Received data for unknown appliance ID: ${applianceData.csApplianceId}`);
+                        }
+                    });
+                    console.log(`[Sensor Update] Processed updates for ${appliancePowerData.length} appliances.`);
+                } else if (appliancePowerData === null) {
+                    console.warn("[Appliances Poller] Received null data, likely due to a fetch error. Skipping update cycle.");
                 } else {
-                    console.error("[Poller Error] Received invalid data type for immediate consumption:", typeof averagePowerW, averagePowerW);
+                    console.error("[Appliances Poller] Received invalid data type:", typeof appliancePowerData, appliancePowerData);
                 }
             },
             error: (e: Error) => {
-                // Log l'erreur venant du poller (qui vient probablement de fetchImmediateConsumptionInkW)
-                console.error('[immediateConsumptionInkW Poller Error]', e.message, e.stack);
+                console.error('[Appliances Poller Error]', e.message, e.stack);
             }
         });
 
-        console.log("Pollers started and subscribed.");
+        console.log("Pollers started and subscribed for individual appliances.");
 
     } catch (error) {
         console.error("Failed to initialize Voltalis plugin:", error instanceof Error ? error.message : error);
-        // Gérer l'échec de l'initialisation (peut-être arrêter le script ou réessayer ?)
-        // process.exit(1); // Optionnel: arrêter si l'initialisation échoue
     }
 })();
-
