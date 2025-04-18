@@ -1,34 +1,29 @@
-import { Voltalis } from "./lib/voltalis";
-import { poller } from "./lib/poller"; // Garde l'import du poller existant
-import { defer, from, Observable, of } from 'rxjs'; // Importe les opérateurs RxJS nécessaires
-import { catchError, map } from 'rxjs/operators'; // Importe les opérateurs pipeables
+// pollers.ts (Correction Appel Méthode)
 
-// Fonction pour enregistrer les pollers
+import { Voltalis, ApplianceRealtimePower } from "./lib/voltalis";
+import { poller } from "./lib/poller";
+// Assurez-vous que rxjs est bien installé: yarn add rxjs
+import { defer, from, Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
 export const registerPollers = (voltalis: Voltalis) => {
   return {
-    // Clé 'immediateConsumptionInkW' gardée pour la compatibilité avec index.ts
-    immediateConsumptionInkW: poller(
+    appliancesRealtimePower: poller(
       '*/2 * * * *', // Toutes les 2 minutes
-      (): Observable<number | null> => { // La fonction retourne maintenant un Observable<number | null>
-        console.log("Poller triggered: fetching immediate consumption...");
-        // 'defer' s'assure que l'appel async est fait à chaque fois que le poller s'abonne/exécute
+      // La fonction appelle maintenant fetchAppliancesRealtimePower
+      (): Observable<ApplianceRealtimePower[] | null> => {
+        console.log("Poller triggered: fetching real-time appliance power...");
         return defer(() =>
-          // 'from' convertit la Promise retournée par fetchImmediateConsumptionInkW en Observable
-          from(voltalis.fetchImmediateConsumptionInkW())
+          // Appelle la bonne méthode qui retourne Promise<ApplianceRealtimePower[]>
+          from(voltalis.fetchAppliancesRealtimePower()) // CORRECTION ICI
         ).pipe(
-          // Optionnel : map pour transformer la donnée si besoin (ici, on la garde telle quelle)
-          // map(valueInWatts => valueInWatts),
-
-          // Gestion d'erreur DANS l'observable pour que le poller ne s'arrête pas
           catchError(error => {
-            console.error("Error during fetchImmediateConsumptionInkW execution in poller:", error instanceof Error ? error.message : error);
-            // Retourne un observable qui émet 'null' en cas d'erreur pour ne pas planter la suite
-            // Le code dans index.ts devra gérer ce cas 'null' s'il arrive.
-            return of(null);
+            console.error("Error during fetchAppliancesRealtimePower execution in poller:", error instanceof Error ? error.message : error);
+            // Retourne null en cas d'erreur
+            return of(null); // Le type est correct: Observable<null> est assignable à Observable<T[] | null>
           })
         );
       }
     )
-    // Ajoutez d'autres pollers ici si nécessaire pour d'autres données
   };
 };
