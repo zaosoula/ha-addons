@@ -1,21 +1,43 @@
-import { HomeAssistant } from "./lib/homeassistant";
+    // sensors.ts (MAJ avec csApplianceId)
 
-export const registerSensors = (hass: HomeAssistant) => {
-  hass.registerSensor('voltalis_immediate_consumption', {
-    friendly_name: 'Voltalis Immediate Consumption (W)',
-    icon: 'mdi:home-lightning-bolt-outline',
-    unit_of_measurement: 'W',
-    device_class: 'power',
-    state_class: 'total_increasing'
-  });
+    import { HomeAssistant } from "./lib/homeassistant";
+    import { ApplianceInfo } from "./lib/voltalis"; // Utilise l'interface mise à jour
 
-  hass.registerSensor('voltalis_consumption', {
-    friendly_name: 'Voltalis Consumption (Wh)',
-    icon: 'mdi:home-lightning-bolt-outline',
-    unit_of_measurement: 'Wh',
-    device_class: 'energy',
-    state_class: 'total_increasing'
-  });
+    interface DynamicSensors {
+        appliancePowerSensors: Map<number, HomeAssistant.Sensor>; // Utilise l'ID numérique comme clé
+    }
 
-  return hass.sensors;
-}
+    export const registerSensors = (hass: HomeAssistant, appliances: ApplianceInfo[]): DynamicSensors => {
+        console.log(`Registering sensors for ${appliances.length} appliances...`);
+        const dynamicSensors: DynamicSensors = {
+            appliancePowerSensors: new Map()
+        };
+
+        appliances.forEach(appliance => {
+            // Utilise le nom de l'appareil pour l'ID d'entité (nettoyé)
+            const safeName = appliance.name.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_{2,}/g, '_');
+            const entityId = `sensor.voltalis_${safeName}_power`;
+            // Utilise csApplianceId (numérique) pour l'ID unique interne
+            const uniqueSensorId = `voltalis_power_${appliance.csApplianceId}`;
+
+            console.log(`Registering sensor: ${entityId} (Unique ID: ${uniqueSensorId}) for appliance "${appliance.name}" (ID: ${appliance.csApplianceId})`);
+
+            const powerSensor = hass.register(entityId, {
+                attributes: {
+                    friendly_name: `${appliance.name} Power`,
+                    icon: 'mdi:radiator',
+                    unit_of_measurement: 'W',
+                    device_class: 'power',
+                    state_class: 'measurement',
+                    voltalis_appliance_id: appliance.csApplianceId, // Garde l'ID numérique
+                    voltalis_modulator_id: appliance.csModulatorId, // Ajoute l'ID modulateur
+                    voltalis_status: appliance.status // Ajoute le statut
+                }
+            });
+            // Utilise l'ID numérique comme clé de la Map
+            dynamicSensors.appliancePowerSensors.set(appliance.csApplianceId, powerSensor);
+        });
+
+        console.log("Sensor registration finished.");
+        return dynamicSensors;
+    };
