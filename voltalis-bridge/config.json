@@ -1,7 +1,7 @@
 {
   "slug": "voltalis_bridge",
   "name": "Voltalis Bridge",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "url": "https://github.com/zaosoula/ha-addons/tree/main/voltalis-bridge",
   "stage": "stable",
   "description": "Bridge to Voltalis services.",
