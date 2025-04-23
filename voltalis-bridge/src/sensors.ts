@@ -1,33 +1,43 @@
-// sensors.ts (Correction Import Sensor et Méthode registerSensor)
+// sensors.ts (Ajout Device Info pour lier les entités)
 
-import { HomeAssistant } from "./lib/homeassistant"; // Importe HomeAssistant
-import { Sensor } from "./lib/sensor";             // Importe Sensor depuis son fichier source
-import { ApplianceInfo } from "./lib/voltalis";
+import { HomeAssistant, Sensor } from "./lib/homeassistant";
+import { ApplianceInfo, Voltalis } from "./lib/voltalis"; // Importe aussi Voltalis pour accéder au siteId
 
 interface DynamicSensors {
-    // La clé est l'ID numérique de l'appareil, la valeur est l'instance Sensor
     appliancePowerSensors: Map<number, Sensor>;
 }
 
-export const registerSensors = (hass: HomeAssistant, appliances: ApplianceInfo[]): DynamicSensors => {
+// La fonction prend maintenant l'instance Voltalis pour accéder aux infos du site
+export const registerSensors = (hass: HomeAssistant, voltalis: Voltalis): DynamicSensors => {
+    const appliances = voltalis.appliances; // Récupère la liste des appareils
+    const siteInfo = voltalis.getMainSite(); // Récupère les infos du site principal
+
     console.log(`Registering sensors for ${appliances.length} appliances...`);
     const dynamicSensors: DynamicSensors = {
         appliancePowerSensors: new Map()
     };
 
+    // Définit les informations pour l'appareil "parent" dans Home Assistant
+    // Utilise l'ID du site Voltalis pour assurer l'unicité
+    const deviceInfo = siteInfo ? {
+        identifiers: [["voltalis_site_id", siteInfo.id.toString()]], // Identifiant unique
+        name: `Voltalis Site ${siteInfo.id}`, // Nom de l'appareil dans HA
+        manufacturer: "Voltalis",
+        model: `Voltalis Bridge (Site ${siteInfo.id})`,
+        // sw_version: "...", // On pourrait ajouter la version du plugin ici
+        via_device: ["voltalis_bridge_addon"] // Lie à l'add-on lui-même (optionnel)
+    } : undefined; // Ne pas créer de device si les infos du site manquent
+
     appliances.forEach(appliance => {
         const safeName = appliance.name.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/_{2,}/g, '_');
-        // Crée l'ID d'entité pour Home Assistant (ex: sensor.voltalis_chambre_amis_power)
         const entityId = `sensor.voltalis_${safeName}_power`;
-        // Crée un ID unique interne basé sur l'ID Voltalis
-        const uniqueSensorId = `voltalis_power_${appliance.csApplianceId}`; // Non utilisé directement par registerSensor, mais bon à avoir
+        const uniqueSensorId = `voltalis_power_${appliance.csApplianceId}`;
 
         console.log(`Registering sensor: ${entityId} for appliance "${appliance.name}" (ID: ${appliance.csApplianceId})`);
 
-        // Définit les attributs pour ce capteur
         const attributes = {
             friendly_name: `${appliance.name} Power`,
-            icon: 'mdi:radiator', // ou mdi:flash pour puissance
+            icon: 'mdi:radiator',
             unit_of_measurement: 'W',
             device_class: 'power',
             state_class: 'measurement',
@@ -37,24 +47,23 @@ export const registerSensors = (hass: HomeAssistant, appliances: ApplianceInfo[]
         };
 
         try {
-            // Appelle la bonne méthode de la classe HomeAssistant
-            hass.registerSensor(entityId, attributes); // Ne retourne rien
+            // Appelle registerSensor en passant les attributs ET les infos de l'appareil parent
+            hass.registerSensor(entityId, {
+                 ...attributes, // Garde les attributs spécifiques au capteur
+                 device: deviceInfo // Ajoute les informations de l'appareil parent
+             });
 
-            // Récupère l'instance du capteur qui vient d'être créée et stockée dans hass.sensors
             const powerSensorInstance = hass.sensors[entityId];
-
             if (powerSensorInstance instanceof Sensor) {
-                // Stocke l'instance récupérée dans notre Map, en utilisant l'ID numérique de l'appareil comme clé
                 dynamicSensors.appliancePowerSensors.set(appliance.csApplianceId, powerSensorInstance);
             } else {
                  console.error(`Failed to retrieve registered sensor instance for ${entityId}.`);
             }
-
         } catch (registerError) {
             console.error(`Error calling hass.registerSensor for ${entityId}:`, registerError);
         }
     });
 
     console.log("Sensor registration finished.");
-    return dynamicSensors; // Retourne la Map contenant les instances de Sensor
+    return dynamicSensors;
 };
