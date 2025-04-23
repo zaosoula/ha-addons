@@ -25,7 +25,7 @@ const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN!);
 
         // 2. Enregistre les capteurs dynamiquement en passant la liste des appareils
         // L'appel est maintenant correct avec les deux arguments
-        const sensors = registerSensors(hass, appliances);
+        const sensors = registerSensors(hass, voltalis);
 
         // 3. Enregistre et démarre les pollers (utilise le nouveau poller)
         const pollers = registerPollers(voltalis);
