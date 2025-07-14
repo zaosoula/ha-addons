@@ -13,20 +13,20 @@
         "postversion": "node ./bin/postversion && git add config.json CHANGELOG.md"
     },
     "dependencies": {
-        "axios": "^0.27.2",
-        "axios-cookiejar-support": "^4.0.2",
-        "axios-observable": "^1.5.0",
+        "@types/debug": "^4.1.10",
+        "axios": "^1.10.0",
+        "axios-observable": "^2.1.0",
+        "debug": "^4.3.4",
+        "dotenv": "^16.3.1",
         "node-cron": "^3.0.1",
-        "rxjs": "^7.5.5",
-        "tough-cookie": "^4.0.0",
-        "uuid": "^8.3.2"
+        "rxjs": "^7.5.5"
     },
     "devDependencies": {
         "@types/node": "^18.0.0",
         "@types/node-cron": "^3.0.1",
-        "@types/tough-cookie": "^4.0.2",
         "shelljs": "^0.8.5",
         "ts-node-dev": "^2.0.0",
         "typescript": "^4.7.3"
-    }
+    },
+    "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
 }

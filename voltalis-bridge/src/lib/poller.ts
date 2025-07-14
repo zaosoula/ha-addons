@@ -1,4 +1,4 @@
-import { Observable, ObservableInput, switchMap } from "rxjs";
+import { Observable, switchMap } from "rxjs";
 import { schedule } from "node-cron";
 export { Axios as axios } from "axios-observable";
 

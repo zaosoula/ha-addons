@@ -1,158 +1,210 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosError, AxiosInstance, AxiosRequestHeaders } from "axios";
 import { axios as axiosObservable } from "./poller";
-import fs from "fs";
-import { wrapper } from "axios-cookiejar-support";
-import { CookieJar } from "tough-cookie";
-import path from "path";
 
 export interface VoltalisSite {
-  id: string;
-  isMain: boolean;
-  modulatorList: unknown[];
+  "id": number,
+  "address": string,
+  "name": string | null,
+  "postalCode": string,
+  "city": string,
+  "country": string,
+  "timezone": string,
+  "state": unknown,
+  "voltalisVersion": string,
+  "installationDate": string,
+  "dataStart": string,
+  "hasGlobalConsumptionMeasure": boolean,
+  "hasDsoMeasure": boolean,
+  "contractTarifsHaveChanged": boolean,
+  "lastContractTarifsUpdateDate": unknown,
+  "hasBasicOffer": boolean,
+  "default": boolean
 }
 
-export interface VoltalisConsumption {
-  consumption: number;
-  duration: number
+export interface VoltalisUser {
+
+  id: number
+  firstname: string
+  lastname: string
+  email: string
+  phones: Array<{
+    phoneType: any
+    phoneNumber: string
+    isDefault: boolean
+  }>
+  defaultSite: {
+    id: number
+    address: string
+    name: any
+    postalCode: string
+    city: string
+    country: string
+    timezone: string
+    state: any
+    voltalisVersion: string
+    installationDate: string
+    dataStart: string
+    hasGlobalConsumptionMeasure: boolean
+    hasDsoMeasure: boolean
+    contractTarifsHaveChanged: boolean
+    lastContractTarifsUpdateDate: any
+    hasBasicOffer: boolean
+    default: boolean
+  }
+  otherSites: Array<any>
+  displayGroup: {
+    name: string
+    rights: Array<{
+      name: string
+      enabled: boolean
+      type: string
+    }>
+    resources: {
+      favicon: string
+      logo: string
+      fontcolor: string
+      headercolor: string
+      secondarycolor: string
+      primarycolor: string
+      font: string
+    }
+  }
+  firstConnection: boolean
+  migratedUser: boolean
+  operation: {
+    operation: string
+    operationType: string
+    acquisitionPartner: string
+    acquisitionChannel: string
+  }
+}
+
+export interface VoltalisConsumptionRealtime {
+  aggregationStepInSeconds: number
+  consumptions: Array<{
+    stepTimestampInUtc: string
+    totalConsumptionInWh: number
+    totalConsumptionInCurrency: number
+  }>
 }
 
 export class Voltalis {
-  private credentials: Record<string, unknown>;
-  private cookiePath: string = process.env.NODE_ENV === 'production' ? '/data/cookies.json' : path.join(__dirname, '../../cookies.json');
-  public user: {
-    [key: string]: unknown;
-    subscriber: {
-      siteList: VoltalisSite[]
-    }
-  } | null = null;
-  private jar: CookieJar = new CookieJar();
-  private api: AxiosInstance;
-  private observableApi: axiosObservable;
+  private readonly credentials: Record<string, unknown>;
+
+  private token: string | null = null;
+  public user: VoltalisUser | null = null;
+  private readonly api: AxiosInstance;
+  private readonly observableApi: axiosObservable;
 
   constructor(username: string, password: string) {
     this.credentials = {
-      id: "",
-      alternative_email: "",
-      email: "",
-      firstname: "",
-      lastname: "",
-      login: "",
+      login: username,
       password,
-      phone: "",
-      country: "",
-      selectedSiteId: "",
-      username,
-      stayLoggedIn: "true",
-    }
+    };
 
-    let previousCookieJarJSON: string;
-    const saveCookieJar = (res: AxiosResponse) => {
-      const cookieJarJSON = JSON.stringify(res.config.jar);
-      if(cookieJarJSON != previousCookieJarJSON) {
-        fs.writeFileSync(this.cookiePath, cookieJarJSON);
-        previousCookieJarJSON = cookieJarJSON;
-      }
-    }
+    this.observableApi =
+      axiosObservable.create({
+        withCredentials: true,
+        baseURL: "https://api.myvoltalis.com/",
+      });
 
-    if (fs.existsSync(this.cookiePath)) {
-      const cookieJarJSON = fs.readFileSync(this.cookiePath, { encoding: 'utf-8' });
-      	const cookies = JSON.parse(cookieJarJSON);
-        this.jar = CookieJar.fromJSON(cookies);
-        previousCookieJarJSON = cookieJarJSON;
-    }
+    this.api = axios.create({
+      baseURL: "https://api.myvoltalis.com/",
+    });
 
-    this.observableApi = wrapper(axiosObservable.create({
-      withCredentials: true,
-      baseURL: 'https://classic.myvoltalis.com/',
-      jar: this.jar
-    }) as unknown as AxiosInstance) as unknown as axiosObservable;
-
-    this.api = wrapper(axios.create({
-      withCredentials: true,
-      baseURL: 'https://classic.myvoltalis.com/',
-      jar: this.jar
-    }));
-
-    this.observableApi.interceptors.request.use((config) => {
-      if(this.isLoggedIn()){
-        if(config.headers === undefined){
-          config.headers = {};
+    this.api.interceptors.request.use((config) => {
+      if (this.token) {
+        if (config.headers === undefined) {
+          config.headers = {} as AxiosRequestHeaders;
         }
-        config.headers['User-Site-Id'] = this.getMainSite().id;
+
+        config.headers.Authorization = `Bearer ${this.token}`;
       }
       return config;
     });
 
-    this.observableApi.interceptors.response.use(function (response) {
-      return response;
-    }, function (error) {
-      if (error.response) {
-        console.error('Error code', error.response);
+    this.observableApi.interceptors.response.use((config) => {
+      if (this.token) {
+        if (config.headers === undefined) {
+          config.headers = {} as AxiosRequestHeaders;
+        }
+
+        config.headers.Authorization = `Bearer ${this.token}`;
       }
-      return error;
+      return config;
     });
 
-   this.api.interceptors.response.use(function (response) {
-      saveCookieJar(response);
-      return response;
-    }, function (error) {
-      saveCookieJar(error);
-      return Promise.reject(error);
-    });
+    this.getRealtimeConsumption =
+      this.getRealtimeConsumption.bind(this);
 
-    this.fetchImmediateConsumptionInkW = this.fetchImmediateConsumptionInkW.bind(this);
-  }
-
-
-  isLoggedIn() {
-    return this.user !== null;
-  }
-
-  ensureIsLoggedIn() {
-    if(!this.isLoggedIn()) {
-      throw new Error('Use .login() first');
-    }
-  }
-
-  getMainSite(): VoltalisSite {
-    this.ensureIsLoggedIn();
-    return this.user!.subscriber.siteList.find(site => site.isMain) as VoltalisSite;
-  }
-
-  getModulators() {
-    this.ensureIsLoggedIn();
-    return this.getMainSite().modulatorList;
+    this.getAppliances = this.getAppliances.bind(this);
   }
 
   async login() {
     let res;
     try {
-      res = await this.api.post('/login', this.credentials);
+      res = await this.api.post("/auth/login", this.credentials);
     } catch (err: unknown) {
-      if(err instanceof AxiosError) {
+      if (err instanceof AxiosError) {
         this.user = null;
 
-        if(err.response) {
-          if(err.response.status === 401){
-            throw new Error('Bad Credentials');
+        if (err.response) {
+          if (err.response.status === 401) {
+            throw new Error("Bad Credentials");
           }
         }
 
-
         console.error(err?.response);
-        throw new Error('Unable to login');
+        throw new Error("Unable to login");
       }
 
       throw err;
     }
 
+    this.token = res.data.token;
+    return this.getCurrentUser();
+  }
+
+  async getCurrentUser() {
+    this.ensureIsLoggedIn();
+    const res = await this.api.get("/api/me");
     this.user = res.data;
     return this.user;
   }
 
-  fetchImmediateConsumptionInkW() {
-    return this.observableApi.get<{
-      immediateConsumptionInkW: VoltalisConsumption
-    }>('/siteData/immediateConsumptionInkW.json');
+  isLoggedIn() {
+    return this.token !== null && this.user !== null;
+  }
+
+  ensureIsLoggedIn() {
+    if (!this.isLoggedIn()) {
+      throw new Error("Use .login() first");
+    }
+  }
+
+  get defaultSite(): VoltalisSite {
+    this.ensureIsLoggedIn();
+    return this.user!.defaultSite;
+  }
+
+
+  getAppliances() {
+    this.ensureIsLoggedIn();
+    return this.observableApi.get(
+      `/api/site/${this.defaultSite.id}/managed-appliance`
+    );
+  }
+
+  getRealtimeConsumption() {
+    this.ensureIsLoggedIn();
+    return this.observableApi.get<VoltalisConsumptionRealtime>(
+      `/api/site/${this.defaultSite.id}/consumption/realtime`,
+      {
+        params: {
+          mode: "TEN_MINUTES",
+          numPoints: 10,
+        }
+      }
+    );
   }
 }
