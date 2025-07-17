@@ -17,5 +17,11 @@ export const registerSensors = (hass: HomeAssistant) => {
     state_class: "total_increasing",
   });
 
+  hass.registerSensor("voltalis_address", {
+    friendly_name: "Voltalis Address",
+    unique_id: "voltalis_address",
+    icon: "mdi:map-marker-outline",
+  });
+
   return hass.sensors;
 };

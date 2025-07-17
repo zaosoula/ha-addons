@@ -1,13 +1,15 @@
-ARG BUILD_FROM
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:18.0.3
 FROM $BUILD_FROM
 
-ENV LANG C.UTF-8
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apk add --no-cache \
     nodejs \
-    yarn \
-    git 
+    npm \
+    git
+
+RUN npm install -g corepack
+RUN corepack enable
 
 COPY package.json /
 COPY yarn.lock /

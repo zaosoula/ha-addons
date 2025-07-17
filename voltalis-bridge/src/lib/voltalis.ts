@@ -123,7 +123,7 @@ export class Voltalis {
       return config;
     });
 
-    this.observableApi.interceptors.response.use((config) => {
+    this.observableApi.interceptors.request.use((config) => {
       if (this.token) {
         if (config.headers === undefined) {
           config.headers = {} as AxiosRequestHeaders;
@@ -166,13 +166,14 @@ export class Voltalis {
   }
 
   async getCurrentUser() {
-    this.ensureIsLoggedIn();
-    const res = await this.api.get("/api/me");
+    if (!this.token) throw new Error("Use .login() first");
+    const res = await this.api.get("/api/account/me");
     this.user = res.data;
     return this.user;
   }
 
   isLoggedIn() {
+    console.log(this.token, this.user);
     return this.token !== null && this.user !== null;
   }
 

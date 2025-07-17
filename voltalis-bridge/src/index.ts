@@ -14,8 +14,13 @@ const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN!);
   await voltalis.login();
   log("Connected to Voltalis API.");
 
-  const { voltalis_immediate_consumption, voltalis_consumption } =
+  const { voltalis_immediate_consumption, voltalis_consumption, voltalis_address } =
     registerSensors(hass);
+
+  voltalis_address.update({
+    state: voltalis.user?.defaultSite.address,
+  })
+
   const pollers = registerPollers(voltalis);
 
   pollers.appliances.subscribe({
@@ -24,23 +29,23 @@ const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN!);
     },
   });
 
-  pollers.immediateConsumptionInkW.subscribe({
-    next: async ({ data }) => {
-      log("[immediateConsumptionInkW]", data);
+  // pollers.immediateConsumptionInkW.subscribe({
+  //   next: async ({ data }) => {
+  //     log("[immediateConsumptionInkW]", data);
 
-      await voltalis_immediate_consumption.update({
-        state: data.immediateConsumptionInkW.consumption * 1000,
-      });
+  //     await voltalis_immediate_consumption.update({
+  //       state: data.immediateConsumptionInkW.consumption * 1000,
+  //     });
 
-      await voltalis_consumption.update({
-        state:
-          data.immediateConsumptionInkW.consumption *
-          (data.immediateConsumptionInkW.duration / 3600) *
-          1000,
-      });
-    },
-    error: (e) => {
-      console.error(e.message, e.stack);
-    },
-  });
+  //     await voltalis_consumption.update({
+  //       state:
+  //         data.immediateConsumptionInkW.consumption *
+  //         (data.immediateConsumptionInkW.duration / 3600) *
+  //         1000,
+  //     });
+  //   },
+  //   error: (e) => {
+  //     console.error(e.message, e.stack);
+  //   },
+  // });
 })();
