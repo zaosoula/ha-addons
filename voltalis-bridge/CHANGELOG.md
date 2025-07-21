@@ -1,6 +1,9 @@
 # Changelog
 
 <!-- changelog_start -->
+## 1.5.0 (2025-07-21)
+
+
 ## 1.4.1 (2022-06-27)
 
 - feat: improve data accuracy
