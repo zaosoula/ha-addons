@@ -110,6 +110,42 @@ export interface VoltalisConsumptionRealtime {
   }>
 }
 
+export interface VoltalisConsumptionDataPoint {
+  stepTimestampOnSite: string
+  contractBasePrice: number
+  isPeakOffPeak: boolean
+  hourTypeInconsistency: boolean
+  totalConsumptionInWh: number
+  peakHourConsumptionInWh: number
+  offPeakHourConsumptionInWh: number
+  totalConsumptionInCurrency: number
+  peakHourConsumptionInCurrency: number
+  offPeakHourConsumptionInCurrency: number
+  estimatedConsumptionInWh: number
+  estimatedConsumptionInCurrency: number
+  objectiveInCurrency: any
+  objectiveInWh: any
+  temperatureInCelsiusDegree: number
+}
+
+export interface VoltalisConsumptionFullDate {
+  summary: VoltalisConsumptionDataPoint;
+  dataPoints: Array<VoltalisConsumptionDataPoint>;
+  perAppliance: Record<string, Array<VoltalisConsumptionDataPoint>>;
+  breakdown: {
+    categories: Array<{
+      name: string
+      subcategories: Array<{
+        name: string
+        totalConsumptionInWh: number
+        totalConsumptionInCurrency: number
+      }>
+    }>
+    disaggregationCategories: Array<any>
+  }
+}
+
+
 export class Voltalis {
   private readonly credentials: Record<string, unknown>;
 
@@ -156,11 +192,9 @@ export class Voltalis {
       return config;
     });
 
-    this.getRealtimeConsumption =
-      this.getRealtimeConsumption.bind(this);
-
     this.getAppliances = this.getAppliances.bind(this);
-    this.fetchConsumptionInWh = this.fetchConsumptionInWh.bind(this);
+    this.fetchRealtimeConsumptionInWh = this.fetchRealtimeConsumptionInWh.bind(this);
+    this.fetchDailyApplianceConsumptionInWh = this.fetchDailyApplianceConsumptionInWh.bind(this);
   }
 
   async login() {
@@ -218,29 +252,22 @@ export class Voltalis {
     );
   }
 
-  getRealtimeConsumption() {
-    this.ensureIsLoggedIn();
+  fetchRealtimeConsumptionInWh() {
     return this.observableApi.get<VoltalisConsumptionRealtime>(
       `/api/site/${this.defaultSite.id}/consumption/realtime`,
       {
         params: {
-          mode: "TEN_MINUTES",
-          numPoints: 10,
-        }
-      }
-    );
-  }
-
-  fetchConsumptionInWh() {
-    return this.observableApi.get<VoltalisConsumptionRealtime>(
-      `/api/site/${this.defaultSite.id}/consumption/realtime`,
-      {
-        params: {
-          mode: "TEN_MINUTES",
+          mode: "TEN_SECONDS",
           numPoints: 1,
         }
       }
     );
   }
 
+  fetchDailyApplianceConsumptionInWh() {
+    const today = new Date().toISOString().split('T')[0];
+    return this.observableApi.get<VoltalisConsumptionFullDate>(
+      `/api/site/${this.defaultSite.id}/consumption/day/${today}/full-data`,
+    );
+  }
 }
