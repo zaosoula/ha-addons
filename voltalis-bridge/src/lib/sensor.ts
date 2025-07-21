@@ -6,7 +6,7 @@ const log = debug("voltalis-bridge:sensor");
 export class Sensor {
   public name: string;
   private api: AxiosInstance;
-  public attributes: Record<string, unknown>;
+  public attributes: Record<string, any>;
   public state: Record<string, unknown> | undefined;
   constructor(
     name: string,
@@ -47,12 +47,13 @@ export class Sensor {
       });
   }
 
-  update(payload: { state: unknown; attributes?: Record<string, unknown> }) {
+  update(payload: { state: unknown; attributes?: Record<string, unknown>, [key: string]: any }) {
     log(`[hass] updating sensor.${this.name}`, { payload });
 
     const _state = {
       ...payload,
       attributes: {
+        unique_id: this.name,
         ...(this.attributes ?? {}),
         ...(payload.attributes ?? {}),
       },

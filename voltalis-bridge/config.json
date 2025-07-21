@@ -24,7 +24,7 @@
     "password": ""
   },
   "schema": {
-    "username": "str",
+    "username": "email",
     "password": "str"
   }
 }

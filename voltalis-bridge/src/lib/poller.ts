@@ -19,5 +19,7 @@ function cron(expr: string) {
 }
 
 
-export const poller = <T extends Observable<any>>(expr: string, fetchFn: () => T) => cron(expr).pipe(switchMap(() => fetchFn()))
+export const poller = <T extends Observable<any>>(expr: string, fetchFn: () => T) => {
+  return cron(expr).pipe(switchMap(() => fetchFn()));
+}
 

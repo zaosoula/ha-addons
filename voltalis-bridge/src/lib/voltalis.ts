@@ -21,6 +21,28 @@ export interface VoltalisSite {
   "default": boolean
 }
 
+export interface VoltalisAppliance {
+  id: number
+  name: string
+  applianceType: string
+  modulatorType: string
+  availableModes: Array<string>
+  voltalisVersion: string
+  programming: {
+    progType: string
+    progName: string
+    idManualSetting: any
+    isOn: boolean
+    untilFurtherNotice: any
+    mode: string
+    idPlanning: number
+    endDate: any
+    temperatureTarget: number
+    defaultTemperature: number
+  }
+  heatingLevel: number
+}
+
 export interface VoltalisUser {
 
   id: number
@@ -138,6 +160,7 @@ export class Voltalis {
       this.getRealtimeConsumption.bind(this);
 
     this.getAppliances = this.getAppliances.bind(this);
+    this.fetchConsumptionInWh = this.fetchConsumptionInWh.bind(this);
   }
 
   async login() {
@@ -173,7 +196,6 @@ export class Voltalis {
   }
 
   isLoggedIn() {
-    console.log(this.token, this.user);
     return this.token !== null && this.user !== null;
   }
 
@@ -191,7 +213,7 @@ export class Voltalis {
 
   getAppliances() {
     this.ensureIsLoggedIn();
-    return this.observableApi.get(
+    return this.observableApi.get<VoltalisAppliance[]>(
       `/api/site/${this.defaultSite.id}/managed-appliance`
     );
   }
@@ -208,4 +230,17 @@ export class Voltalis {
       }
     );
   }
+
+  fetchConsumptionInWh() {
+    return this.observableApi.get<VoltalisConsumptionRealtime>(
+      `/api/site/${this.defaultSite.id}/consumption/realtime`,
+      {
+        params: {
+          mode: "TEN_MINUTES",
+          numPoints: 1,
+        }
+      }
+    );
+  }
+
 }
