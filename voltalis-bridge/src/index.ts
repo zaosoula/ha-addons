@@ -28,7 +28,7 @@ const hass = new HomeAssistant(process.env.SUPERVISOR_TOKEN!);
   pollers.appliances.subscribe({
     next: async ({ data }) => {
       for (const appliance of data) {
-        if (appliance.applianceType !== 'HEATER') {
+        if (!["HEATER", 'WATER_HEATER'].includes(appliance.applianceType)) {
           continue
         }
 

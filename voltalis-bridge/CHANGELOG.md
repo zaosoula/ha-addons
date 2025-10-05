@@ -1,6 +1,8 @@
 # Changelog
 
 <!-- changelog_start -->
+## 1.7.0 (2025-10-05)
+- feat: display WATER_HEATER appliances
 ## 1.6.0 (2025-07-21)
 
 
